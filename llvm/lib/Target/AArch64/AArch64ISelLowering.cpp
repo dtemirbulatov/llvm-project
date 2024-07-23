@@ -17519,6 +17519,14 @@ performVecReduceAddExtCombine(SDNode *N, TargetLowering::DAGCombinerInfo &DCI,
   EVT VecOpVT = VecOp.getValueType();
   SDLoc DL(N);
 
+  // Combining vecreduce.add(ext(A)) to vecreduce.add(DOT(zero, A, one)) is
+  // more benefitial.
+  if (Subtarget.hasDotProd() && N->getValueType(0) == MVT::i32 &&
+      !VecOpVT.isScalableVT() &&
+      (VecOpVT.getVectorElementType() == MVT::i8 ||
+       VecOpVT.getVectorElementType() == MVT::i16))
+    return SDValue();
+
   // Split the input vectors if not legal, e.g.
   // i32 (vecreduce_add (zext nxv32i8 %op to nxv32i32))
   // ->
@@ -17539,7 +17547,7 @@ performVecReduceAddExtCombine(SDNode *N, TargetLowering::DAGCombinerInfo &DCI,
     return DAG.getNode(ISD::ADD, DL, N->getValueType(0), Lo, Hi);
   }
 
-  if (!TLI.isTypeLegal(VecOpVT))
+  if (!TLI.isTypeLegal(VecOpVT) || VecOpVT.getScalarType() == MVT::i1)
     return SDValue();
 
   if (VecOpVT.isFixedLengthVector() &&

@@ -13,6 +13,7 @@ define internal i32 @test(ptr nocapture readonly %p1, i32 %i1, ptr nocapture rea
 ; SVE256-NEXT:    mov w10, wzr
 ; SVE256-NEXT:    mov w8, wzr
 ; SVE256-NEXT:    mov w11, #-16 // =0xfffffff0
+; SVE256-NEXT:    ptrue p1.s, vl8
 ; SVE256-NEXT:    .p2align 5, , 16
 ; SVE256-NEXT:  .LBB0_1: // %L1
 ; SVE256-NEXT:    // =>This Inner Loop Header: Depth=1
@@ -24,8 +25,12 @@ define internal i32 @test(ptr nocapture readonly %p1, i32 %i1, ptr nocapture rea
 ; SVE256-NEXT:    ld1b { z1.h }, p0/z, [x2, x13]
 ; SVE256-NEXT:    add w9, w9, w1
 ; SVE256-NEXT:    sub z0.h, z0.h, z1.h
-; SVE256-NEXT:    saddv d0, p0, z0.h
-; SVE256-NEXT:    fmov w12, s0
+; SVE256-NEXT:    sunpklo z1.s, z0.h
+; SVE256-NEXT:    ext z0.b, z0.b, z0.b, #16
+; SVE256-NEXT:    sunpklo z0.s, z0.h
+; SVE256-NEXT:    add z0.s, z1.s, z0.s
+; SVE256-NEXT:    uaddv d0, p1, z0.s
+; SVE256-NEXT:    fmov x12, d0
 ; SVE256-NEXT:    add w8, w12, w8
 ; SVE256-NEXT:    b.lo .LBB0_1
 ; SVE256-NEXT:  // %bb.2: // %L2

@@ -2,6 +2,7 @@
 ; RUN: llc -mattr=+sve < %s | FileCheck %s -check-prefixes=CHECK,NO_STREAMING
 ; RUN: llc -mattr=+sve -force-streaming-compatible -aarch64-sve-vector-bits-min=128 -aarch64-sve-vector-bits-max=128  < %s | FileCheck %s -check-prefixes=CHECK,SVE_128
 ; RUN: llc -mattr=+sve -force-streaming-compatible -aarch64-sve-vector-bits-min=256 < %s | FileCheck %s -check-prefixes=CHECK,SVE_MIN_256
+; RUN: llc -mattr=+sve,+dotprod < %s | FileCheck %s -check-prefixes=CHECK,DOT_PRODUCT
 
 target triple = "aarch64-unknown-linux-gnu"
 
@@ -46,6 +47,16 @@ define i32 @reduce_uadd_v16i8(<32 x i8> %a) #0 {
 ; SVE_MIN_256-NEXT:    fmov x0, d0
 ; SVE_MIN_256-NEXT:    // kill: def $w0 killed $w0 killed $x0
 ; SVE_MIN_256-NEXT:    ret
+;
+; DOT_PRODUCT-LABEL: reduce_uadd_v16i8:
+; DOT_PRODUCT:       // %bb.0:
+; DOT_PRODUCT-NEXT:    movi v2.16b, #1
+; DOT_PRODUCT-NEXT:    movi v3.2d, #0000000000000000
+; DOT_PRODUCT-NEXT:    udot v3.4s, v1.16b, v2.16b
+; DOT_PRODUCT-NEXT:    udot v3.4s, v0.16b, v2.16b
+; DOT_PRODUCT-NEXT:    addv s0, v3.4s
+; DOT_PRODUCT-NEXT:    fmov w0, s0
+; DOT_PRODUCT-NEXT:    ret
   %1 = zext <32 x i8> %a to <32 x i32>
   %2 = call i32 @llvm.vector.reduce.add.v16i32(<32 x i32> %1)
   ret i32 %2
@@ -92,9 +103,86 @@ define i32 @reduce_sadd_v16i8(<32 x i8> %a) #0 {
 ; SVE_MIN_256-NEXT:    fmov x0, d0
 ; SVE_MIN_256-NEXT:    // kill: def $w0 killed $w0 killed $x0
 ; SVE_MIN_256-NEXT:    ret
+;
+; DOT_PRODUCT-LABEL: reduce_sadd_v16i8:
+; DOT_PRODUCT:       // %bb.0:
+; DOT_PRODUCT-NEXT:    movi v2.16b, #1
+; DOT_PRODUCT-NEXT:    movi v3.2d, #0000000000000000
+; DOT_PRODUCT-NEXT:    sdot v3.4s, v1.16b, v2.16b
+; DOT_PRODUCT-NEXT:    sdot v3.4s, v0.16b, v2.16b
+; DOT_PRODUCT-NEXT:    addv s0, v3.4s
+; DOT_PRODUCT-NEXT:    fmov w0, s0
+; DOT_PRODUCT-NEXT:    ret
   %1 = sext <32 x i8> %a to <32 x i32>
   %2 = call i32 @llvm.vector.reduce.add.v16i32(<32 x i32> %1)
   ret i32 %2
+}
+
+define i32 @reduce_zadd_udot(<16 x i8> %a, <16 x i8> %b) {
+; NO_STREAMING-LABEL: reduce_zadd_udot:
+; NO_STREAMING:       // %bb.0:
+; NO_STREAMING-NEXT:    uabd v0.16b, v0.16b, v1.16b
+; NO_STREAMING-NEXT:    ushll2 v1.8h, v0.16b, #0
+; NO_STREAMING-NEXT:    ushll v0.8h, v0.8b, #0
+; NO_STREAMING-NEXT:    uaddlp v1.4s, v1.8h
+; NO_STREAMING-NEXT:    uadalp v1.4s, v0.8h
+; NO_STREAMING-NEXT:    addv s0, v1.4s
+; NO_STREAMING-NEXT:    fmov w0, s0
+; NO_STREAMING-NEXT:    ret
+;
+; SVE_128-LABEL: reduce_zadd_udot:
+; SVE_128:       // %bb.0:
+; SVE_128-NEXT:    // kill: def $q1 killed $q1 def $z1
+; SVE_128-NEXT:    // kill: def $q0 killed $q0 def $z0
+; SVE_128-NEXT:    uunpklo z2.h, z0.b
+; SVE_128-NEXT:    uunpklo z3.h, z1.b
+; SVE_128-NEXT:    ptrue p0.h
+; SVE_128-NEXT:    ext z0.b, z0.b, z0.b, #8
+; SVE_128-NEXT:    ext z1.b, z1.b, z1.b, #8
+; SVE_128-NEXT:    uunpklo z0.h, z0.b
+; SVE_128-NEXT:    uunpklo z1.h, z1.b
+; SVE_128-NEXT:    sub z2.h, z2.h, z3.h
+; SVE_128-NEXT:    sub z0.h, z0.h, z1.h
+; SVE_128-NEXT:    movprfx z1, z2
+; SVE_128-NEXT:    abs z1.h, p0/m, z2.h
+; SVE_128-NEXT:    abs z0.h, p0/m, z0.h
+; SVE_128-NEXT:    uaddv d1, p0, z1.h
+; SVE_128-NEXT:    uaddv d0, p0, z0.h
+; SVE_128-NEXT:    fmov w8, s1
+; SVE_128-NEXT:    fmov w9, s0
+; SVE_128-NEXT:    add w0, w8, w9
+; SVE_128-NEXT:    ret
+;
+; SVE_MIN_256-LABEL: reduce_zadd_udot:
+; SVE_MIN_256:       // %bb.0:
+; SVE_MIN_256-NEXT:    // kill: def $q1 killed $q1 def $z1
+; SVE_MIN_256-NEXT:    // kill: def $q0 killed $q0 def $z0
+; SVE_MIN_256-NEXT:    ptrue p0.h, vl16
+; SVE_MIN_256-NEXT:    uunpklo z0.h, z0.b
+; SVE_MIN_256-NEXT:    uunpklo z1.h, z1.b
+; SVE_MIN_256-NEXT:    sub z0.h, z0.h, z1.h
+; SVE_MIN_256-NEXT:    abs z0.h, p0/m, z0.h
+; SVE_MIN_256-NEXT:    uaddv d0, p0, z0.h
+; SVE_MIN_256-NEXT:    fmov x0, d0
+; SVE_MIN_256-NEXT:    // kill: def $w0 killed $w0 killed $x0
+; SVE_MIN_256-NEXT:    ret
+;
+; DOT_PRODUCT-LABEL: reduce_zadd_udot:
+; DOT_PRODUCT:       // %bb.0:
+; DOT_PRODUCT-NEXT:    movi v2.16b, #1
+; DOT_PRODUCT-NEXT:    movi v3.2d, #0000000000000000
+; DOT_PRODUCT-NEXT:    uabd v0.16b, v0.16b, v1.16b
+; DOT_PRODUCT-NEXT:    udot v3.4s, v0.16b, v2.16b
+; DOT_PRODUCT-NEXT:    addv s0, v3.4s
+; DOT_PRODUCT-NEXT:    fmov w0, s0
+; DOT_PRODUCT-NEXT:    ret
+  %az = zext <16 x i8> %a to <16 x i16>
+  %bz = zext <16 x i8> %b to <16 x i16>
+  %s = sub nsw <16 x i16> %az, %bz
+  %ab = tail call <16 x i16> @llvm.abs.v16i16(<16 x i16> %s, i1 false)
+  %z = zext <16 x i16> %ab to <16 x i32>
+  %r = tail call i32 @llvm.vector.reduce.add.v16i32(<16 x i32> %z)
+  ret i32 %r
 }
 
 attributes #0 = { "target-features"="+sve" }
