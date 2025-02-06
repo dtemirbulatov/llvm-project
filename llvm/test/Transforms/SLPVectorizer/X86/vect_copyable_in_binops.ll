@@ -561,18 +561,9 @@ define void @add1f(ptr noalias %dst, ptr noalias %src) {
 ;
 ; COPYABLE-LABEL: @add1f(
 ; COPYABLE-NEXT:  entry:
-; COPYABLE-NEXT:    [[INCDEC_PTR:%.*]] = getelementptr inbounds float, ptr [[SRC:%.*]], i64 1
-; COPYABLE-NEXT:    [[TMP0:%.*]] = load float, ptr [[SRC]], align 4
-; COPYABLE-NEXT:    [[INCDEC_PTR1:%.*]] = getelementptr inbounds float, ptr [[DST:%.*]], i64 1
-; COPYABLE-NEXT:    store float [[TMP0]], ptr [[DST]], align 4
-; COPYABLE-NEXT:    [[INCDEC_PTR5:%.*]] = getelementptr inbounds float, ptr [[SRC]], i64 3
-; COPYABLE-NEXT:    [[INCDEC_PTR7:%.*]] = getelementptr inbounds float, ptr [[DST]], i64 3
-; COPYABLE-NEXT:    [[TMP1:%.*]] = load <2 x float>, ptr [[INCDEC_PTR]], align 4
-; COPYABLE-NEXT:    [[TMP2:%.*]] = fadd fast <2 x float> [[TMP1]], <float 1.000000e+00, float 2.000000e+00>
-; COPYABLE-NEXT:    store <2 x float> [[TMP2]], ptr [[INCDEC_PTR1]], align 4
-; COPYABLE-NEXT:    [[TMP3:%.*]] = load float, ptr [[INCDEC_PTR5]], align 4
-; COPYABLE-NEXT:    [[ADD9:%.*]] = fadd fast float [[TMP3]], 3.000000e+00
-; COPYABLE-NEXT:    store float [[ADD9]], ptr [[INCDEC_PTR7]], align 4
+; COPYABLE-NEXT:    [[TMP0:%.*]] = load <4 x float>, ptr [[SRC:%.*]], align 4
+; COPYABLE-NEXT:    [[TMP1:%.*]] = fadd fast <4 x float> [[TMP0]], <float -0.000000e+00, float 1.000000e+00, float 2.000000e+00, float 3.000000e+00>
+; COPYABLE-NEXT:    store <4 x float> [[TMP1]], ptr [[DST:%.*]], align 4
 ; COPYABLE-NEXT:    ret void
 ;
 entry:
@@ -597,21 +588,44 @@ entry:
 }
 
 define void @sub0f(ptr noalias %dst, ptr noalias %src) {
-; CHECK-LABEL: @sub0f(
-; CHECK-NEXT:  entry:
-; CHECK-NEXT:    [[INCDEC_PTR:%.*]] = getelementptr inbounds float, ptr [[SRC:%.*]], i64 1
-; CHECK-NEXT:    [[TMP0:%.*]] = load float, ptr [[SRC]], align 4
-; CHECK-NEXT:    [[ADD:%.*]] = fadd fast float [[TMP0]], -1.000000e+00
-; CHECK-NEXT:    [[INCDEC_PTR1:%.*]] = getelementptr inbounds float, ptr [[DST:%.*]], i64 1
-; CHECK-NEXT:    store float [[ADD]], ptr [[DST]], align 4
-; CHECK-NEXT:    [[INCDEC_PTR2:%.*]] = getelementptr inbounds float, ptr [[SRC]], i64 2
-; CHECK-NEXT:    [[TMP1:%.*]] = load float, ptr [[INCDEC_PTR]], align 4
-; CHECK-NEXT:    [[INCDEC_PTR4:%.*]] = getelementptr inbounds float, ptr [[DST]], i64 2
-; CHECK-NEXT:    store float [[TMP1]], ptr [[INCDEC_PTR1]], align 4
-; CHECK-NEXT:    [[TMP2:%.*]] = load <2 x float>, ptr [[INCDEC_PTR2]], align 4
-; CHECK-NEXT:    [[TMP3:%.*]] = fadd fast <2 x float> [[TMP2]], <float -2.000000e+00, float -3.000000e+00>
-; CHECK-NEXT:    store <2 x float> [[TMP3]], ptr [[INCDEC_PTR4]], align 4
-; CHECK-NEXT:    ret void
+; NON-POW2-LABEL: @sub0f(
+; NON-POW2-NEXT:  entry:
+; NON-POW2-NEXT:    [[INCDEC_PTR:%.*]] = getelementptr inbounds float, ptr [[SRC:%.*]], i64 1
+; NON-POW2-NEXT:    [[TMP0:%.*]] = load float, ptr [[SRC]], align 4
+; NON-POW2-NEXT:    [[ADD:%.*]] = fadd fast float [[TMP0]], -1.000000e+00
+; NON-POW2-NEXT:    [[INCDEC_PTR1:%.*]] = getelementptr inbounds float, ptr [[DST:%.*]], i64 1
+; NON-POW2-NEXT:    store float [[ADD]], ptr [[DST]], align 4
+; NON-POW2-NEXT:    [[INCDEC_PTR2:%.*]] = getelementptr inbounds float, ptr [[SRC]], i64 2
+; NON-POW2-NEXT:    [[TMP1:%.*]] = load float, ptr [[INCDEC_PTR]], align 4
+; NON-POW2-NEXT:    [[INCDEC_PTR4:%.*]] = getelementptr inbounds float, ptr [[DST]], i64 2
+; NON-POW2-NEXT:    store float [[TMP1]], ptr [[INCDEC_PTR1]], align 4
+; NON-POW2-NEXT:    [[TMP2:%.*]] = load <2 x float>, ptr [[INCDEC_PTR2]], align 4
+; NON-POW2-NEXT:    [[TMP3:%.*]] = fadd fast <2 x float> [[TMP2]], <float -2.000000e+00, float -3.000000e+00>
+; NON-POW2-NEXT:    store <2 x float> [[TMP3]], ptr [[INCDEC_PTR4]], align 4
+; NON-POW2-NEXT:    ret void
+;
+; POW2-ONLY-LABEL: @sub0f(
+; POW2-ONLY-NEXT:  entry:
+; POW2-ONLY-NEXT:    [[INCDEC_PTR:%.*]] = getelementptr inbounds float, ptr [[SRC:%.*]], i64 1
+; POW2-ONLY-NEXT:    [[TMP0:%.*]] = load float, ptr [[SRC]], align 4
+; POW2-ONLY-NEXT:    [[ADD:%.*]] = fadd fast float [[TMP0]], -1.000000e+00
+; POW2-ONLY-NEXT:    [[INCDEC_PTR1:%.*]] = getelementptr inbounds float, ptr [[DST:%.*]], i64 1
+; POW2-ONLY-NEXT:    store float [[ADD]], ptr [[DST]], align 4
+; POW2-ONLY-NEXT:    [[INCDEC_PTR2:%.*]] = getelementptr inbounds float, ptr [[SRC]], i64 2
+; POW2-ONLY-NEXT:    [[TMP1:%.*]] = load float, ptr [[INCDEC_PTR]], align 4
+; POW2-ONLY-NEXT:    [[INCDEC_PTR4:%.*]] = getelementptr inbounds float, ptr [[DST]], i64 2
+; POW2-ONLY-NEXT:    store float [[TMP1]], ptr [[INCDEC_PTR1]], align 4
+; POW2-ONLY-NEXT:    [[TMP2:%.*]] = load <2 x float>, ptr [[INCDEC_PTR2]], align 4
+; POW2-ONLY-NEXT:    [[TMP3:%.*]] = fadd fast <2 x float> [[TMP2]], <float -2.000000e+00, float -3.000000e+00>
+; POW2-ONLY-NEXT:    store <2 x float> [[TMP3]], ptr [[INCDEC_PTR4]], align 4
+; POW2-ONLY-NEXT:    ret void
+;
+; COPYABLE-LABEL: @sub0f(
+; COPYABLE-NEXT:  entry:
+; COPYABLE-NEXT:    [[TMP0:%.*]] = load <4 x float>, ptr [[SRC:%.*]], align 4
+; COPYABLE-NEXT:    [[TMP1:%.*]] = fadd fast <4 x float> [[TMP0]], <float -1.000000e+00, float -0.000000e+00, float -2.000000e+00, float -3.000000e+00>
+; COPYABLE-NEXT:    store <4 x float> [[TMP1]], ptr [[DST:%.*]], align 4
+; COPYABLE-NEXT:    ret void
 ;
 entry:
   %incdec.ptr = getelementptr inbounds float, ptr %src, i64 1
@@ -695,23 +709,55 @@ entry:
 }
 
 define void @addsub0f(ptr noalias %dst, ptr noalias %src) {
-; CHECK-LABEL: @addsub0f(
-; CHECK-NEXT:  entry:
-; CHECK-NEXT:    [[INCDEC_PTR:%.*]] = getelementptr inbounds float, ptr [[SRC:%.*]], i64 1
-; CHECK-NEXT:    [[TMP0:%.*]] = load float, ptr [[SRC]], align 4
-; CHECK-NEXT:    [[SUB:%.*]] = fadd fast float [[TMP0]], -1.000000e+00
-; CHECK-NEXT:    [[INCDEC_PTR1:%.*]] = getelementptr inbounds float, ptr [[DST:%.*]], i64 1
-; CHECK-NEXT:    store float [[SUB]], ptr [[DST]], align 4
-; CHECK-NEXT:    [[INCDEC_PTR2:%.*]] = getelementptr inbounds float, ptr [[SRC]], i64 2
-; CHECK-NEXT:    [[TMP1:%.*]] = load float, ptr [[INCDEC_PTR]], align 4
-; CHECK-NEXT:    [[INCDEC_PTR3:%.*]] = getelementptr inbounds float, ptr [[DST]], i64 2
-; CHECK-NEXT:    store float [[TMP1]], ptr [[INCDEC_PTR1]], align 4
-; CHECK-NEXT:    [[TMP2:%.*]] = load <2 x float>, ptr [[INCDEC_PTR2]], align 4
-; CHECK-NEXT:    [[TMP3:%.*]] = fadd fast <2 x float> [[TMP2]], <float -2.000000e+00, float -3.000000e+00>
-; CHECK-NEXT:    [[TMP4:%.*]] = fsub fast <2 x float> [[TMP2]], <float -2.000000e+00, float -3.000000e+00>
-; CHECK-NEXT:    [[TMP5:%.*]] = shufflevector <2 x float> [[TMP3]], <2 x float> [[TMP4]], <2 x i32> <i32 0, i32 3>
-; CHECK-NEXT:    store <2 x float> [[TMP5]], ptr [[INCDEC_PTR3]], align 4
-; CHECK-NEXT:    ret void
+; NON-POW2-LABEL: @addsub0f(
+; NON-POW2-NEXT:  entry:
+; NON-POW2-NEXT:    [[INCDEC_PTR:%.*]] = getelementptr inbounds float, ptr [[SRC:%.*]], i64 1
+; NON-POW2-NEXT:    [[TMP0:%.*]] = load float, ptr [[SRC]], align 4
+; NON-POW2-NEXT:    [[SUB:%.*]] = fadd fast float [[TMP0]], -1.000000e+00
+; NON-POW2-NEXT:    [[INCDEC_PTR1:%.*]] = getelementptr inbounds float, ptr [[DST:%.*]], i64 1
+; NON-POW2-NEXT:    store float [[SUB]], ptr [[DST]], align 4
+; NON-POW2-NEXT:    [[INCDEC_PTR2:%.*]] = getelementptr inbounds float, ptr [[SRC]], i64 2
+; NON-POW2-NEXT:    [[TMP1:%.*]] = load float, ptr [[INCDEC_PTR]], align 4
+; NON-POW2-NEXT:    [[INCDEC_PTR3:%.*]] = getelementptr inbounds float, ptr [[DST]], i64 2
+; NON-POW2-NEXT:    store float [[TMP1]], ptr [[INCDEC_PTR1]], align 4
+; NON-POW2-NEXT:    [[TMP2:%.*]] = load <2 x float>, ptr [[INCDEC_PTR2]], align 4
+; NON-POW2-NEXT:    [[TMP3:%.*]] = fadd fast <2 x float> [[TMP2]], <float -2.000000e+00, float -3.000000e+00>
+; NON-POW2-NEXT:    [[TMP4:%.*]] = fsub fast <2 x float> [[TMP2]], <float -2.000000e+00, float -3.000000e+00>
+; NON-POW2-NEXT:    [[TMP5:%.*]] = shufflevector <2 x float> [[TMP3]], <2 x float> [[TMP4]], <2 x i32> <i32 0, i32 3>
+; NON-POW2-NEXT:    store <2 x float> [[TMP5]], ptr [[INCDEC_PTR3]], align 4
+; NON-POW2-NEXT:    ret void
+;
+; POW2-ONLY-LABEL: @addsub0f(
+; POW2-ONLY-NEXT:  entry:
+; POW2-ONLY-NEXT:    [[INCDEC_PTR:%.*]] = getelementptr inbounds float, ptr [[SRC:%.*]], i64 1
+; POW2-ONLY-NEXT:    [[TMP0:%.*]] = load float, ptr [[SRC]], align 4
+; POW2-ONLY-NEXT:    [[SUB:%.*]] = fadd fast float [[TMP0]], -1.000000e+00
+; POW2-ONLY-NEXT:    [[INCDEC_PTR1:%.*]] = getelementptr inbounds float, ptr [[DST:%.*]], i64 1
+; POW2-ONLY-NEXT:    store float [[SUB]], ptr [[DST]], align 4
+; POW2-ONLY-NEXT:    [[INCDEC_PTR2:%.*]] = getelementptr inbounds float, ptr [[SRC]], i64 2
+; POW2-ONLY-NEXT:    [[TMP1:%.*]] = load float, ptr [[INCDEC_PTR]], align 4
+; POW2-ONLY-NEXT:    [[INCDEC_PTR3:%.*]] = getelementptr inbounds float, ptr [[DST]], i64 2
+; POW2-ONLY-NEXT:    store float [[TMP1]], ptr [[INCDEC_PTR1]], align 4
+; POW2-ONLY-NEXT:    [[TMP2:%.*]] = load <2 x float>, ptr [[INCDEC_PTR2]], align 4
+; POW2-ONLY-NEXT:    [[TMP3:%.*]] = fadd fast <2 x float> [[TMP2]], <float -2.000000e+00, float -3.000000e+00>
+; POW2-ONLY-NEXT:    [[TMP4:%.*]] = fsub fast <2 x float> [[TMP2]], <float -2.000000e+00, float -3.000000e+00>
+; POW2-ONLY-NEXT:    [[TMP5:%.*]] = shufflevector <2 x float> [[TMP3]], <2 x float> [[TMP4]], <2 x i32> <i32 0, i32 3>
+; POW2-ONLY-NEXT:    store <2 x float> [[TMP5]], ptr [[INCDEC_PTR3]], align 4
+; POW2-ONLY-NEXT:    ret void
+;
+; COPYABLE-LABEL: @addsub0f(
+; COPYABLE-NEXT:  entry:
+; COPYABLE-NEXT:    [[INCDEC_PTR2:%.*]] = getelementptr inbounds float, ptr [[SRC:%.*]], i64 2
+; COPYABLE-NEXT:    [[INCDEC_PTR3:%.*]] = getelementptr inbounds float, ptr [[DST:%.*]], i64 2
+; COPYABLE-NEXT:    [[TMP0:%.*]] = load <2 x float>, ptr [[SRC]], align 4
+; COPYABLE-NEXT:    [[TMP1:%.*]] = fadd fast <2 x float> [[TMP0]], <float -1.000000e+00, float -0.000000e+00>
+; COPYABLE-NEXT:    store <2 x float> [[TMP1]], ptr [[DST]], align 4
+; COPYABLE-NEXT:    [[TMP2:%.*]] = load <2 x float>, ptr [[INCDEC_PTR2]], align 4
+; COPYABLE-NEXT:    [[TMP3:%.*]] = fadd fast <2 x float> [[TMP2]], <float -2.000000e+00, float -3.000000e+00>
+; COPYABLE-NEXT:    [[TMP4:%.*]] = fsub fast <2 x float> [[TMP2]], <float -2.000000e+00, float -3.000000e+00>
+; COPYABLE-NEXT:    [[TMP5:%.*]] = shufflevector <2 x float> [[TMP3]], <2 x float> [[TMP4]], <2 x i32> <i32 0, i32 3>
+; COPYABLE-NEXT:    store <2 x float> [[TMP5]], ptr [[INCDEC_PTR3]], align 4
+; COPYABLE-NEXT:    ret void
 ;
 entry:
   %incdec.ptr = getelementptr inbounds float, ptr %src, i64 1
@@ -735,23 +781,55 @@ entry:
 }
 
 define void @addsub1f(ptr noalias %dst, ptr noalias %src) {
-; CHECK-LABEL: @addsub1f(
-; CHECK-NEXT:  entry:
-; CHECK-NEXT:    [[INCDEC_PTR2:%.*]] = getelementptr inbounds float, ptr [[SRC:%.*]], i64 2
-; CHECK-NEXT:    [[INCDEC_PTR3:%.*]] = getelementptr inbounds float, ptr [[DST:%.*]], i64 2
-; CHECK-NEXT:    [[TMP0:%.*]] = load <2 x float>, ptr [[SRC]], align 4
-; CHECK-NEXT:    [[TMP1:%.*]] = fadd fast <2 x float> [[TMP0]], splat (float -1.000000e+00)
-; CHECK-NEXT:    [[TMP2:%.*]] = fsub fast <2 x float> [[TMP0]], splat (float -1.000000e+00)
-; CHECK-NEXT:    [[TMP3:%.*]] = shufflevector <2 x float> [[TMP1]], <2 x float> [[TMP2]], <2 x i32> <i32 0, i32 3>
-; CHECK-NEXT:    store <2 x float> [[TMP3]], ptr [[DST]], align 4
-; CHECK-NEXT:    [[INCDEC_PTR4:%.*]] = getelementptr inbounds float, ptr [[SRC]], i64 3
-; CHECK-NEXT:    [[TMP4:%.*]] = load float, ptr [[INCDEC_PTR2]], align 4
-; CHECK-NEXT:    [[INCDEC_PTR6:%.*]] = getelementptr inbounds float, ptr [[DST]], i64 3
-; CHECK-NEXT:    store float [[TMP4]], ptr [[INCDEC_PTR3]], align 4
-; CHECK-NEXT:    [[TMP5:%.*]] = load float, ptr [[INCDEC_PTR4]], align 4
-; CHECK-NEXT:    [[SUB8:%.*]] = fsub fast float [[TMP5]], -3.000000e+00
-; CHECK-NEXT:    store float [[SUB8]], ptr [[INCDEC_PTR6]], align 4
-; CHECK-NEXT:    ret void
+; NON-POW2-LABEL: @addsub1f(
+; NON-POW2-NEXT:  entry:
+; NON-POW2-NEXT:    [[INCDEC_PTR2:%.*]] = getelementptr inbounds float, ptr [[SRC:%.*]], i64 2
+; NON-POW2-NEXT:    [[INCDEC_PTR3:%.*]] = getelementptr inbounds float, ptr [[DST:%.*]], i64 2
+; NON-POW2-NEXT:    [[TMP0:%.*]] = load <2 x float>, ptr [[SRC]], align 4
+; NON-POW2-NEXT:    [[TMP1:%.*]] = fadd fast <2 x float> [[TMP0]], splat (float -1.000000e+00)
+; NON-POW2-NEXT:    [[TMP2:%.*]] = fsub fast <2 x float> [[TMP0]], splat (float -1.000000e+00)
+; NON-POW2-NEXT:    [[TMP3:%.*]] = shufflevector <2 x float> [[TMP1]], <2 x float> [[TMP2]], <2 x i32> <i32 0, i32 3>
+; NON-POW2-NEXT:    store <2 x float> [[TMP3]], ptr [[DST]], align 4
+; NON-POW2-NEXT:    [[INCDEC_PTR4:%.*]] = getelementptr inbounds float, ptr [[SRC]], i64 3
+; NON-POW2-NEXT:    [[TMP4:%.*]] = load float, ptr [[INCDEC_PTR2]], align 4
+; NON-POW2-NEXT:    [[INCDEC_PTR6:%.*]] = getelementptr inbounds float, ptr [[DST]], i64 3
+; NON-POW2-NEXT:    store float [[TMP4]], ptr [[INCDEC_PTR3]], align 4
+; NON-POW2-NEXT:    [[TMP5:%.*]] = load float, ptr [[INCDEC_PTR4]], align 4
+; NON-POW2-NEXT:    [[SUB8:%.*]] = fsub fast float [[TMP5]], -3.000000e+00
+; NON-POW2-NEXT:    store float [[SUB8]], ptr [[INCDEC_PTR6]], align 4
+; NON-POW2-NEXT:    ret void
+;
+; POW2-ONLY-LABEL: @addsub1f(
+; POW2-ONLY-NEXT:  entry:
+; POW2-ONLY-NEXT:    [[INCDEC_PTR2:%.*]] = getelementptr inbounds float, ptr [[SRC:%.*]], i64 2
+; POW2-ONLY-NEXT:    [[INCDEC_PTR3:%.*]] = getelementptr inbounds float, ptr [[DST:%.*]], i64 2
+; POW2-ONLY-NEXT:    [[TMP0:%.*]] = load <2 x float>, ptr [[SRC]], align 4
+; POW2-ONLY-NEXT:    [[TMP1:%.*]] = fadd fast <2 x float> [[TMP0]], splat (float -1.000000e+00)
+; POW2-ONLY-NEXT:    [[TMP2:%.*]] = fsub fast <2 x float> [[TMP0]], splat (float -1.000000e+00)
+; POW2-ONLY-NEXT:    [[TMP3:%.*]] = shufflevector <2 x float> [[TMP1]], <2 x float> [[TMP2]], <2 x i32> <i32 0, i32 3>
+; POW2-ONLY-NEXT:    store <2 x float> [[TMP3]], ptr [[DST]], align 4
+; POW2-ONLY-NEXT:    [[INCDEC_PTR4:%.*]] = getelementptr inbounds float, ptr [[SRC]], i64 3
+; POW2-ONLY-NEXT:    [[TMP4:%.*]] = load float, ptr [[INCDEC_PTR2]], align 4
+; POW2-ONLY-NEXT:    [[INCDEC_PTR6:%.*]] = getelementptr inbounds float, ptr [[DST]], i64 3
+; POW2-ONLY-NEXT:    store float [[TMP4]], ptr [[INCDEC_PTR3]], align 4
+; POW2-ONLY-NEXT:    [[TMP5:%.*]] = load float, ptr [[INCDEC_PTR4]], align 4
+; POW2-ONLY-NEXT:    [[SUB8:%.*]] = fsub fast float [[TMP5]], -3.000000e+00
+; POW2-ONLY-NEXT:    store float [[SUB8]], ptr [[INCDEC_PTR6]], align 4
+; POW2-ONLY-NEXT:    ret void
+;
+; COPYABLE-LABEL: @addsub1f(
+; COPYABLE-NEXT:  entry:
+; COPYABLE-NEXT:    [[INCDEC_PTR2:%.*]] = getelementptr inbounds float, ptr [[SRC:%.*]], i64 2
+; COPYABLE-NEXT:    [[INCDEC_PTR3:%.*]] = getelementptr inbounds float, ptr [[DST:%.*]], i64 2
+; COPYABLE-NEXT:    [[TMP0:%.*]] = load <2 x float>, ptr [[SRC]], align 4
+; COPYABLE-NEXT:    [[TMP1:%.*]] = fadd fast <2 x float> [[TMP0]], splat (float -1.000000e+00)
+; COPYABLE-NEXT:    [[TMP2:%.*]] = fsub fast <2 x float> [[TMP0]], splat (float -1.000000e+00)
+; COPYABLE-NEXT:    [[TMP3:%.*]] = shufflevector <2 x float> [[TMP1]], <2 x float> [[TMP2]], <2 x i32> <i32 0, i32 3>
+; COPYABLE-NEXT:    store <2 x float> [[TMP3]], ptr [[DST]], align 4
+; COPYABLE-NEXT:    [[TMP4:%.*]] = load <2 x float>, ptr [[INCDEC_PTR2]], align 4
+; COPYABLE-NEXT:    [[TMP5:%.*]] = fsub fast <2 x float> [[TMP4]], <float 0.000000e+00, float -3.000000e+00>
+; COPYABLE-NEXT:    store <2 x float> [[TMP5]], ptr [[INCDEC_PTR3]], align 4
+; COPYABLE-NEXT:    ret void
 ;
 entry:
   %incdec.ptr = getelementptr inbounds float, ptr %src, i64 1
@@ -775,21 +853,44 @@ entry:
 }
 
 define void @mulf(ptr noalias %dst, ptr noalias %src) {
-; CHECK-LABEL: @mulf(
-; CHECK-NEXT:  entry:
-; CHECK-NEXT:    [[INCDEC_PTR2:%.*]] = getelementptr inbounds float, ptr [[SRC:%.*]], i64 2
-; CHECK-NEXT:    [[INCDEC_PTR4:%.*]] = getelementptr inbounds float, ptr [[DST:%.*]], i64 2
-; CHECK-NEXT:    [[TMP0:%.*]] = load <2 x float>, ptr [[SRC]], align 4
-; CHECK-NEXT:    [[TMP1:%.*]] = fmul fast <2 x float> [[TMP0]], <float 2.570000e+02, float -3.000000e+00>
-; CHECK-NEXT:    store <2 x float> [[TMP1]], ptr [[DST]], align 4
-; CHECK-NEXT:    [[INCDEC_PTR5:%.*]] = getelementptr inbounds float, ptr [[SRC]], i64 3
-; CHECK-NEXT:    [[TMP2:%.*]] = load float, ptr [[INCDEC_PTR2]], align 4
-; CHECK-NEXT:    [[INCDEC_PTR7:%.*]] = getelementptr inbounds float, ptr [[DST]], i64 3
-; CHECK-NEXT:    store float [[TMP2]], ptr [[INCDEC_PTR4]], align 4
-; CHECK-NEXT:    [[TMP3:%.*]] = load float, ptr [[INCDEC_PTR5]], align 4
-; CHECK-NEXT:    [[SUB9:%.*]] = fmul fast float [[TMP3]], -9.000000e+00
-; CHECK-NEXT:    store float [[SUB9]], ptr [[INCDEC_PTR7]], align 4
-; CHECK-NEXT:    ret void
+; NON-POW2-LABEL: @mulf(
+; NON-POW2-NEXT:  entry:
+; NON-POW2-NEXT:    [[INCDEC_PTR2:%.*]] = getelementptr inbounds float, ptr [[SRC:%.*]], i64 2
+; NON-POW2-NEXT:    [[INCDEC_PTR4:%.*]] = getelementptr inbounds float, ptr [[DST:%.*]], i64 2
+; NON-POW2-NEXT:    [[TMP0:%.*]] = load <2 x float>, ptr [[SRC]], align 4
+; NON-POW2-NEXT:    [[TMP1:%.*]] = fmul fast <2 x float> [[TMP0]], <float 2.570000e+02, float -3.000000e+00>
+; NON-POW2-NEXT:    store <2 x float> [[TMP1]], ptr [[DST]], align 4
+; NON-POW2-NEXT:    [[INCDEC_PTR5:%.*]] = getelementptr inbounds float, ptr [[SRC]], i64 3
+; NON-POW2-NEXT:    [[TMP2:%.*]] = load float, ptr [[INCDEC_PTR2]], align 4
+; NON-POW2-NEXT:    [[INCDEC_PTR7:%.*]] = getelementptr inbounds float, ptr [[DST]], i64 3
+; NON-POW2-NEXT:    store float [[TMP2]], ptr [[INCDEC_PTR4]], align 4
+; NON-POW2-NEXT:    [[TMP3:%.*]] = load float, ptr [[INCDEC_PTR5]], align 4
+; NON-POW2-NEXT:    [[SUB9:%.*]] = fmul fast float [[TMP3]], -9.000000e+00
+; NON-POW2-NEXT:    store float [[SUB9]], ptr [[INCDEC_PTR7]], align 4
+; NON-POW2-NEXT:    ret void
+;
+; POW2-ONLY-LABEL: @mulf(
+; POW2-ONLY-NEXT:  entry:
+; POW2-ONLY-NEXT:    [[INCDEC_PTR2:%.*]] = getelementptr inbounds float, ptr [[SRC:%.*]], i64 2
+; POW2-ONLY-NEXT:    [[INCDEC_PTR4:%.*]] = getelementptr inbounds float, ptr [[DST:%.*]], i64 2
+; POW2-ONLY-NEXT:    [[TMP0:%.*]] = load <2 x float>, ptr [[SRC]], align 4
+; POW2-ONLY-NEXT:    [[TMP1:%.*]] = fmul fast <2 x float> [[TMP0]], <float 2.570000e+02, float -3.000000e+00>
+; POW2-ONLY-NEXT:    store <2 x float> [[TMP1]], ptr [[DST]], align 4
+; POW2-ONLY-NEXT:    [[INCDEC_PTR5:%.*]] = getelementptr inbounds float, ptr [[SRC]], i64 3
+; POW2-ONLY-NEXT:    [[TMP2:%.*]] = load float, ptr [[INCDEC_PTR2]], align 4
+; POW2-ONLY-NEXT:    [[INCDEC_PTR7:%.*]] = getelementptr inbounds float, ptr [[DST]], i64 3
+; POW2-ONLY-NEXT:    store float [[TMP2]], ptr [[INCDEC_PTR4]], align 4
+; POW2-ONLY-NEXT:    [[TMP3:%.*]] = load float, ptr [[INCDEC_PTR5]], align 4
+; POW2-ONLY-NEXT:    [[SUB9:%.*]] = fmul fast float [[TMP3]], -9.000000e+00
+; POW2-ONLY-NEXT:    store float [[SUB9]], ptr [[INCDEC_PTR7]], align 4
+; POW2-ONLY-NEXT:    ret void
+;
+; COPYABLE-LABEL: @mulf(
+; COPYABLE-NEXT:  entry:
+; COPYABLE-NEXT:    [[TMP0:%.*]] = load <4 x float>, ptr [[SRC:%.*]], align 4
+; COPYABLE-NEXT:    [[TMP1:%.*]] = fmul fast <4 x float> [[TMP0]], <float 2.570000e+02, float -3.000000e+00, float 1.000000e+00, float -9.000000e+00>
+; COPYABLE-NEXT:    store <4 x float> [[TMP1]], ptr [[DST:%.*]], align 4
+; COPYABLE-NEXT:    ret void
 ;
 entry:
   %incdec.ptr = getelementptr inbounds float, ptr %src, i64 1
@@ -1006,21 +1107,49 @@ entry:
 }
 
 define void @mulfn(ptr noalias %dst, ptr noalias %src) {
-; CHECK-LABEL: @mulfn(
-; CHECK-NEXT:  entry:
-; CHECK-NEXT:    [[INCDEC_PTR2:%.*]] = getelementptr inbounds float, ptr [[SRC:%.*]], i64 2
-; CHECK-NEXT:    [[INCDEC_PTR4:%.*]] = getelementptr inbounds float, ptr [[DST:%.*]], i64 2
-; CHECK-NEXT:    [[TMP0:%.*]] = load <2 x float>, ptr [[SRC]], align 4
-; CHECK-NEXT:    [[TMP1:%.*]] = fmul <2 x float> [[TMP0]], <float 2.570000e+02, float -3.000000e+00>
-; CHECK-NEXT:    store <2 x float> [[TMP1]], ptr [[DST]], align 4
-; CHECK-NEXT:    [[INCDEC_PTR5:%.*]] = getelementptr inbounds float, ptr [[SRC]], i64 3
-; CHECK-NEXT:    [[TMP2:%.*]] = load float, ptr [[INCDEC_PTR2]], align 4
-; CHECK-NEXT:    [[INCDEC_PTR7:%.*]] = getelementptr inbounds float, ptr [[DST]], i64 3
-; CHECK-NEXT:    store float [[TMP2]], ptr [[INCDEC_PTR4]], align 4
-; CHECK-NEXT:    [[TMP3:%.*]] = load float, ptr [[INCDEC_PTR5]], align 4
-; CHECK-NEXT:    [[SUB9:%.*]] = fmul fast float [[TMP3]], -9.000000e+00
-; CHECK-NEXT:    store float [[SUB9]], ptr [[INCDEC_PTR7]], align 4
-; CHECK-NEXT:    ret void
+; NON-POW2-LABEL: @mulfn(
+; NON-POW2-NEXT:  entry:
+; NON-POW2-NEXT:    [[INCDEC_PTR2:%.*]] = getelementptr inbounds float, ptr [[SRC:%.*]], i64 2
+; NON-POW2-NEXT:    [[INCDEC_PTR4:%.*]] = getelementptr inbounds float, ptr [[DST:%.*]], i64 2
+; NON-POW2-NEXT:    [[TMP0:%.*]] = load <2 x float>, ptr [[SRC]], align 4
+; NON-POW2-NEXT:    [[TMP1:%.*]] = fmul <2 x float> [[TMP0]], <float 2.570000e+02, float -3.000000e+00>
+; NON-POW2-NEXT:    store <2 x float> [[TMP1]], ptr [[DST]], align 4
+; NON-POW2-NEXT:    [[INCDEC_PTR5:%.*]] = getelementptr inbounds float, ptr [[SRC]], i64 3
+; NON-POW2-NEXT:    [[TMP2:%.*]] = load float, ptr [[INCDEC_PTR2]], align 4
+; NON-POW2-NEXT:    [[INCDEC_PTR7:%.*]] = getelementptr inbounds float, ptr [[DST]], i64 3
+; NON-POW2-NEXT:    store float [[TMP2]], ptr [[INCDEC_PTR4]], align 4
+; NON-POW2-NEXT:    [[TMP3:%.*]] = load float, ptr [[INCDEC_PTR5]], align 4
+; NON-POW2-NEXT:    [[SUB9:%.*]] = fmul fast float [[TMP3]], -9.000000e+00
+; NON-POW2-NEXT:    store float [[SUB9]], ptr [[INCDEC_PTR7]], align 4
+; NON-POW2-NEXT:    ret void
+;
+; POW2-ONLY-LABEL: @mulfn(
+; POW2-ONLY-NEXT:  entry:
+; POW2-ONLY-NEXT:    [[INCDEC_PTR2:%.*]] = getelementptr inbounds float, ptr [[SRC:%.*]], i64 2
+; POW2-ONLY-NEXT:    [[INCDEC_PTR4:%.*]] = getelementptr inbounds float, ptr [[DST:%.*]], i64 2
+; POW2-ONLY-NEXT:    [[TMP0:%.*]] = load <2 x float>, ptr [[SRC]], align 4
+; POW2-ONLY-NEXT:    [[TMP1:%.*]] = fmul <2 x float> [[TMP0]], <float 2.570000e+02, float -3.000000e+00>
+; POW2-ONLY-NEXT:    store <2 x float> [[TMP1]], ptr [[DST]], align 4
+; POW2-ONLY-NEXT:    [[INCDEC_PTR5:%.*]] = getelementptr inbounds float, ptr [[SRC]], i64 3
+; POW2-ONLY-NEXT:    [[TMP2:%.*]] = load float, ptr [[INCDEC_PTR2]], align 4
+; POW2-ONLY-NEXT:    [[INCDEC_PTR7:%.*]] = getelementptr inbounds float, ptr [[DST]], i64 3
+; POW2-ONLY-NEXT:    store float [[TMP2]], ptr [[INCDEC_PTR4]], align 4
+; POW2-ONLY-NEXT:    [[TMP3:%.*]] = load float, ptr [[INCDEC_PTR5]], align 4
+; POW2-ONLY-NEXT:    [[SUB9:%.*]] = fmul fast float [[TMP3]], -9.000000e+00
+; POW2-ONLY-NEXT:    store float [[SUB9]], ptr [[INCDEC_PTR7]], align 4
+; POW2-ONLY-NEXT:    ret void
+;
+; COPYABLE-LABEL: @mulfn(
+; COPYABLE-NEXT:  entry:
+; COPYABLE-NEXT:    [[INCDEC_PTR2:%.*]] = getelementptr inbounds float, ptr [[SRC:%.*]], i64 2
+; COPYABLE-NEXT:    [[INCDEC_PTR4:%.*]] = getelementptr inbounds float, ptr [[DST:%.*]], i64 2
+; COPYABLE-NEXT:    [[TMP0:%.*]] = load <2 x float>, ptr [[SRC]], align 4
+; COPYABLE-NEXT:    [[TMP1:%.*]] = fmul <2 x float> [[TMP0]], <float 2.570000e+02, float -3.000000e+00>
+; COPYABLE-NEXT:    store <2 x float> [[TMP1]], ptr [[DST]], align 4
+; COPYABLE-NEXT:    [[TMP2:%.*]] = load <2 x float>, ptr [[INCDEC_PTR2]], align 4
+; COPYABLE-NEXT:    [[TMP3:%.*]] = fmul fast <2 x float> [[TMP2]], <float 1.000000e+00, float -9.000000e+00>
+; COPYABLE-NEXT:    store <2 x float> [[TMP3]], ptr [[INCDEC_PTR4]], align 4
+; COPYABLE-NEXT:    ret void
 ;
 entry:
   %incdec.ptr = getelementptr inbounds float, ptr %src, i64 1
